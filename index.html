@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Create your avatar — Social Hub</title>
+<style>
+  :root{
+    --ground:#0e0f14; --ground-2:#111318; --panel:#171a21; --panel-2:#1e222b;
+    --elev:#252b36; --line:#2b313d; --line-soft:#222833;
+    --text:#f3f5fa; --muted:#9aa4b6; --faint:#6a7488;
+    --cyan:#37e1ff; --cyan-ink:#0a2a33; --amber:#ffcf45; --red:#ff4d5e; --mint:#57e6b0;
+    --radius:18px; --radius-sm:12px;
+    --shadow:0 24px 60px -20px rgba(0,0,0,.75);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(120% 90% at 15% -10%, #1a2740 0%, transparent 55%),
+      radial-gradient(120% 90% at 100% 0%, #2a1830 0%, transparent 50%),
+      var(--ground);
+    color:var(--text); font-family:var(--font); line-height:1.5;
+    -webkit-font-smoothing:antialiased; min-height:100%;
+    display:flex; flex-direction:column; align-items:center;
+    padding:clamp(16px,3vw,40px);
+  }
+  .shell{width:100%; max-width:940px; margin:auto}
+
+  /* header + stepper */
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em;font-size:18px;margin-bottom:4px}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan)}
+  .eyebrow{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin:0 0 6px}
+  h1{font-size:clamp(24px,4.4vw,38px);line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+  h1 .hl{color:var(--cyan)}
+  .lede{color:var(--muted);margin:0 0 22px;max-width:56ch;font-size:clamp(14px,1.5vw,16px)}
+
+  .steps{display:flex;gap:10px;margin:0 0 20px;flex-wrap:wrap}
+  .step{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:40px;
+    border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600}
+  .step .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    background:var(--panel-2);color:var(--faint);font-size:12px;border:1px solid var(--line)}
+  .step.active{border-color:var(--cyan);color:var(--text);box-shadow:0 0 0 1px rgba(55,225,255,.25)}
+  .step.active .n{background:var(--cyan);color:#04222b;border-color:var(--cyan)}
+  .step.done .n{background:var(--mint);color:#053124;border-color:var(--mint)}
+  .step.done{color:var(--text)}
+
+  /* layout */
+  .grid{display:grid;grid-template-columns:1fr;gap:22px;align-items:start}
+  @media(min-width:820px){.grid{grid-template-columns:minmax(320px,420px) 1fr}}
+
+  /* avatar stage (RPM 3D creator drops in here in step 2) */
+  .stage-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+  .stage{position:relative;aspect-ratio:3/4;width:100%;border-radius:16px;overflow:hidden;
+    background:radial-gradient(85% 60% at 50% 24%, rgba(55,225,255,.16), transparent 60%),linear-gradient(180deg,#161b24,#10141b);
+    border:1px solid var(--line-soft);display:grid;place-items:center}
+  video,canvas,img.snap{width:100%;height:100%;object-fit:cover;display:block}
+  video{transform:scaleX(-1)} /* mirror the live selfie */
+  .stage .placeholder{color:var(--faint);text-align:center;padding:24px;font-size:14px}
+  .stage .placeholder .big{font-size:40px;margin-bottom:8px}
+  .ring{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:52%;height:34px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(55,225,255,.5),rgba(55,225,255,.05) 70%,transparent);pointer-events:none;
+    animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
+  .chip{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px;
+    background:rgba(10,13,18,.72);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;backdrop-filter:blur(4px)}
+  .chip.live{color:var(--amber)} .chip .rd{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.7s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,94,.55)}70%{box-shadow:0 0 0 7px rgba(255,77,94,0)}100%{box-shadow:0 0 0 0 rgba(255,77,94,0)}}
+  .lock-badge{position:absolute;top:12px;right:12px;background:rgba(10,13,18,.72);border:1px solid var(--line);
+    border-radius:20px;padding:5px 10px;font-size:10.5px;color:var(--cyan);font-weight:700;backdrop-filter:blur(4px)}
+
+  .stage-actions{display:flex;gap:10px;margin-top:12px}
+  .hint{color:var(--faint);font-size:12px;margin-top:10px;text-align:center}
+
+  /* right column panels */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(16px,2.2vw,22px);box-shadow:var(--shadow)}
+  .panel h3{margin:0 0 4px;font-size:18px}
+  .panel p.sub{margin:0 0 16px;color:var(--muted);font-size:13.5px}
+
+  label.field{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px;letter-spacing:.02em}
+  input.name{width:100%;background:var(--ground-2);border:1px solid var(--line);color:var(--text);
+    border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;outline:none}
+  input.name:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(55,225,255,.15)}
+
+  .cats{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}
+  .cat{padding:8px 13px;border-radius:30px;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+  .cat.active{border-color:var(--cyan);color:var(--text);background:var(--cyan-ink)}
+  .tray{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:400px){.tray{grid-template-columns:repeat(3,1fr)}}
+  .item{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel-2),var(--ground-2));
+    display:grid;place-items:center;font-size:22px;cursor:pointer;position:relative;transition:transform .08s}
+  .item:hover{transform:translateY(-2px)}
+  .item.sel{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(55,225,255,.35);background:linear-gradient(160deg,#183642,#10141b)}
+  .item.sel::after{content:"✓";position:absolute;top:4px;right:6px;color:var(--cyan);font-size:12px;font-weight:800}
+  .swatches{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.sel{border-color:#fff;box-shadow:0 0 0 2px var(--cyan)}
+
+  .note{display:flex;gap:10px;align-items:flex-start;background:var(--cyan-ink);border:1px solid #16576a;
+    border-radius:12px;padding:12px 14px;color:#bdeeff;font-size:12.5px;margin-top:18px}
+  .note b{color:#fff}
+
+  /* buttons */
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    font-family:inherit;font-weight:700;font-size:14px;border-radius:12px;padding:13px 18px;cursor:pointer;flex:1;transition:filter .1s}
+  .btn:hover{filter:brightness(1.12)} .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  .btn.primary{background:linear-gradient(180deg,#4fe7ff,#22c6e6);color:#04222b;border-color:transparent;box-shadow:0 10px 24px -10px rgba(55,225,255,.6)}
+  .btn.ghost{background:transparent}
+  .row{display:flex;gap:12px;margin-top:20px}
+
+  .success{text-align:center;padding:10px 4px}
+  .success .big{font-size:52px}
+  .success pre{text-align:left;background:var(--ground-2);border:1px solid var(--line);border-radius:12px;
+    padding:14px;font-size:12px;color:var(--mint);overflow:auto;max-height:200px}
+  .hide{display:none !important}
+  .foot{color:var(--faint);font-size:12px;margin-top:26px;text-align:center}
+  a{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand"><span class="dot"></span> Social Hub</div>
+  <p class="eyebrow">Create your avatar</p>
+  <h1>Make a <span class="hl">you</span> that comes alive</h1>
+  <p class="lede">Scan your face, make it yours, and step into the world. Your look mirrors you — retake anytime.</p>
+
+  <div class="steps">
+    <div class="step active" data-step="1"><span class="n">1</span> Scan</div>
+    <div class="step" data-step="2"><span class="n">2</span> Customize</div>
+    <div class="step" data-step="3"><span class="n">3</span> Enter world</div>
+  </div>
+
+  <div class="grid">
+    <!-- avatar stage -->
+    <div class="stage-card">
+      <div class="stage" id="stage">
+        <div class="placeholder" id="ph"><div class="big">📷</div>Camera preview appears here</div>
+        <video id="video" autoplay playsinline muted class="hide"></video>
+        <img id="snap" class="snap hide" alt="your capture">
+        <div class="chip live hide" id="liveChip"><span class="rd"></span> LIVE</div>
+        <div class="lock-badge hide" id="lockBadge">🔒 Signature Chibi</div>
+        <div class="ring hide" id="ring"></div>
+      </div>
+      <div class="stage-actions" id="scanActions">
+        <button class="btn primary" id="startCam">Turn on camera</button>
+        <button class="btn ghost" id="capture" disabled>Capture</button>
+      </div>
+      <div class="stage-actions hide" id="retakeActions">
+        <button class="btn ghost" id="retake">↺ Retake</button>
+      </div>
+      <div class="hint" id="camHint">Your photo never leaves your device until you enter the world.</div>
+      <input type="file" id="fileInput" accept="image/*" class="hide">
+    </div>
+
+    <!-- step panels -->
+    <div>
+      <!-- STEP 1 -->
+      <div class="panel" id="panel1">
+        <h3>Scan your face</h3>
+        <p class="sub">A quick selfie is all we need. We turn it into a stylized 3D chibi that looks like you.</p>
+        <div class="note">💡 <span>Good light, face centered, no hat. This becomes your <b>face, hair &amp; skin</b> — you can retake it any time to change them.</span></div>
+        <div class="row">
+          <button class="btn ghost" id="useUpload">Upload a photo instead</button>
+          <button class="btn primary" id="toStep2" disabled>Continue →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="panel hide" id="panel2">
+        <h3>Make it yours</h3>
+        <p class="sub">Face, hair &amp; skin come from your scan. Everything below is unlimited &amp; free.</p>
+        <label class="field" for="nameInput">Display name</label>
+        <input class="name" id="nameInput" maxlength="18" placeholder="e.g. Kuro" autocomplete="off">
+
+        <div class="cats" id="cats"></div>
+        <div class="tray" id="tray"></div>
+        <div class="swatches" id="swatches"></div>
+
+        <div class="note">🎨 <span>These are placeholders for now. Next milestone plugs in the <b>Ready Player Me</b> 3D creator right in this stage, so wardrobe items become real 3D pieces on your avatar.</span></div>
+        <div class="row">
+          <button class="btn ghost" id="backTo1">← Back</button>
+          <button class="btn primary" id="toStep3">Continue →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="panel hide" id="panel3">
+        <h3>Ready to go live</h3>
+        <p class="sub">This is what enters the world with you.</p>
+        <div id="summary"></div>
+        <div class="row">
+          <button class="btn ghost" id="backTo2">← Back</button>
+          <button class="btn primary" id="enterWorld">Enter the world →</button>
+        </div>
+      </div>
+
+      <!-- DONE -->
+      <div class="panel hide" id="panelDone">
+        <div class="success">
+          <div class="big">✨</div>
+          <h3>You're all set!</h3>
+          <p class="sub">Your avatar is saved on this device and ready for the world.</p>
+          <pre id="payloadOut"></pre>
+          <div class="row">
+            <button class="btn ghost" id="editAgain">Edit again</button>
+            <button class="btn primary" id="launchGame">Launch Social Hub</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Step 3 next: the Ready Player Me 3D creator slots into the avatar stage — same flow, real rigged 3D character.</p>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const state = {
+  step: 1,
+  photo: null,            // dataURL
+  name: "",
+  cosmetics: {},          // category -> item index
+  color: 0,
+};
+
+// ---- customization catalog (placeholders until RPM 3D pieces land) --------
+const CATS = {
+  Outfit:  ["👕","🧥","👗","🥋","🦺","🧦","👘","🥼"],
+  Shoes:   ["👟","🥾","🩴","👢","🥿","👞"],
+  Hats:    ["🧢","🎩","👒","⛑️","🪖","🎓"],
+  Bags:    ["🎒","👜","👝","💼","🛍️"],
+  Effects: ["✨","🔥","❄️","⚡","🌈","💫"],
+  Emotes:  ["👋","💃","😎","🙌","🕺","❤️"],
+};
+const COLORS = ["#37e1ff","#ff7ab6","#ffcf45","#57e6b0","#a78bfa","#ff8c42","#f3f5fa","#2b2b33"];
+let activeCat = "Outfit";
+
+// ---- webcam ---------------------------------------------------------------
+let stream = null;
+async function startCamera(){
+  $("camHint").textContent = "Requesting camera…";
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user", width:640, height:853 }, audio:false });
+    const v = $("video");
+    v.srcObject = stream;
+    $("ph").classList.add("hide");
+    v.classList.remove("hide");
+    $("liveChip").classList.remove("hide");
+    $("startCam").classList.add("hide");
+    $("capture").disabled = false;
+    $("camHint").textContent = "Center your face, then Capture.";
+  }catch(err){
+    // graceful fallback — no camera / denied
+    $("camHint").innerHTML = "Couldn't use the camera ("+ (err && err.name || "unavailable") +"). <b>Upload a photo</b> instead.";
+    $("startCam").classList.add("hide");
+    revealUpload();
+  }
+}
+function stopCamera(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+
+function capturePhoto(){
+  const v = $("video");
+  const w = v.videoWidth || 640, h = v.videoHeight || 853;
+  const c = document.createElement("canvas");
+  c.width = 720; c.height = 960;                       // 3:4 portrait
+  const ctx = c.getContext("2d");
+  ctx.translate(c.width, 0); ctx.scale(-1, 1);         // un-mirror to match the live preview
+  const s = Math.max(c.width / w, c.height / h);       // cover-fit, centered
+  const dw = w * s, dh = h * s;
+  ctx.drawImage(v, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+  state.photo = c.toDataURL("image/jpeg", 0.9);
+  showSnap(state.photo);
+  stopCamera();
+}
+
+function showSnap(dataUrl){
+  const img = $("snap");
+  img.src = dataUrl;
+  img.classList.remove("hide");
+  $("ph").classList.add("hide");        // hide the "camera preview" placeholder (upload path)
+  $("video").classList.add("hide");
+  $("liveChip").classList.add("hide");
+  $("lockBadge").classList.remove("hide");
+  $("ring").classList.remove("hide");
+  $("scanActions").classList.add("hide");
+  $("retakeActions").classList.remove("hide");
+  $("toStep2").disabled = false;
+  $("camHint").textContent = "Looking good. Continue to customize, or retake.";
+}
+
+function resetCapture(){
+  state.photo = null;
+  $("snap").classList.add("hide");
+  $("lockBadge").classList.add("hide");
+  $("ring").classList.add("hide");
+  $("ph").classList.remove("hide");
+  $("retakeActions").classList.add("hide");
+  $("scanActions").classList.remove("hide");
+  $("startCam").classList.remove("hide");
+  $("capture").disabled = true;
+  $("toStep2").disabled = true;
+  $("camHint").textContent = "Your photo never leaves your device until you enter the world.";
+}
+
+function revealUpload(){
+  $("useUpload").textContent = "📁 Choose a photo";
+  $("useUpload").onclick = () => $("fileInput").click();
+}
+$("fileInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { state.photo = r.result; showSnap(r.result); };
+  r.readAsDataURL(f);
+});
+
+// ---- customization UI -----------------------------------------------------
+function buildCats(){
+  const catBox = $("cats");
+  catBox.innerHTML = "";
+  Object.keys(CATS).forEach(cat=>{
+    const el = document.createElement("div");
+    el.className = "cat" + (cat===activeCat ? " active":"");
+    el.textContent = cat;
+    el.onclick = () => { activeCat = cat; buildCats(); buildTray(); };
+    catBox.appendChild(el);
+  });
+}
+function buildTray(){
+  const tray = $("tray");
+  tray.innerHTML = "";
+  CATS[activeCat].forEach((emoji,i)=>{
+    const el = document.createElement("div");
+    el.className = "item" + (state.cosmetics[activeCat]===i ? " sel":"");
+    el.textContent = emoji;
+    el.onclick = () => { state.cosmetics[activeCat] = i; buildTray(); };
+    tray.appendChild(el);
+  });
+}
+function buildSwatches(){
+  const sw = $("swatches");
+  sw.innerHTML = "";
+  COLORS.forEach((c,i)=>{
+    const el = document.createElement("div");
+    el.className = "sw" + (state.color===i ? " sel":"");
+    el.style.background = c;
+    el.onclick = () => { state.color = i; buildSwatches(); };
+    sw.appendChild(el);
+  });
+}
+
+// ---- step navigation ------------------------------------------------------
+function setStep(n){
+  state.step = n;
+  document.querySelectorAll(".step").forEach(s=>{
+    const sn = +s.dataset.step;
+    s.classList.toggle("active", sn===n);
+    s.classList.toggle("done", sn<n);
+  });
+  ["panel1","panel2","panel3","panelDone"].forEach((p,i)=>{
+    $(p).classList.toggle("hide", i !== (n===0?3:n-1));
+  });
+  if(n===3) renderSummary();
+}
+
+function renderSummary(){
+  const cosmeticList = Object.entries(state.cosmetics)
+    .map(([k,v])=>`${k}: ${CATS[k][v]}`).join("   ");
+  $("summary").innerHTML = `
+    <div style="display:flex;gap:14px;align-items:center;margin:6px 0 4px">
+      <div style="width:74px;height:98px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0b0e13;flex:none">
+        ${state.photo ? `<img src="${state.photo}" style="width:100%;height:100%;object-fit:cover">` : ""}
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:800">${escapeHtml(state.name || "Player")}</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:2px">Signature Chibi · from your scan</div>
+        <div style="color:var(--cyan);font-size:12.5px;margin-top:6px">${cosmeticList || "default outfit"}</div>
+      </div>
+    </div>`;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ---- persist + handoff to the game ---------------------------------------
+function buildPayload(){
+  return {
+    v: 1,
+    name: state.name || "Player",
+    style: "signature_chibi",
+    facePhoto: state.photo,          // becomes the RPM selfie input in step-2 milestone
+    cosmetics: state.cosmetics,
+    accentColor: COLORS[state.color],
+    createdAt: new Date().toISOString(),
+  };
+}
+function enterWorld(){
+  const payload = buildPayload();
+  try{ localStorage.setItem("sh_avatar", JSON.stringify(payload)); }catch(e){}
+  // show a device-safe summary (omit the big photo string)
+  const shown = Object.assign({}, payload, { facePhoto: payload.facePhoto ? "[selfie stored]" : null });
+  $("payloadOut").textContent = JSON.stringify(shown, null, 2);
+  setStep(0); // done panel
+  document.querySelectorAll(".step").forEach(s=>s.classList.add("done"));
+}
+function launchGame(){
+  // The Godot web build (bundled at ./world/) reads localStorage "sh_avatar".
+  // ?next= overrides the target; ?preview=1 keeps the standalone confirmation.
+  const q = new URLSearchParams(location.search);
+  const url = q.get("next");
+  if(url){ location.href = url; return; }
+  if(q.get("preview") === "1"){
+    alert("Preview of the sign-up flow ✔\nYour avatar is saved on this device. In the full build this button drops you into the 3D world.");
+    return;
+  }
+  location.href = "world/";
+}
+
+// ---- wire up --------------------------------------------------------------
+$("startCam").onclick = startCamera;
+$("capture").onclick = capturePhoto;
+$("retake").onclick = () => { resetCapture(); startCamera(); };
+$("useUpload").onclick = () => $("fileInput").click();
+$("toStep2").onclick = () => { buildCats(); buildTray(); buildSwatches(); setStep(2); };
+$("backTo1").onclick = () => setStep(1);
+$("toStep3").onclick = () => { state.name = $("nameInput").value.trim(); setStep(3); };
+$("backTo2").onclick = () => setStep(2);
+$("enterWorld").onclick = enterWorld;
+$("editAgain").onclick = () => setStep(2);
+$("launchGame").onclick = launchGame;
+$("nameInput") && $("nameInput").addEventListener("input", e=>state.name=e.target.value.trim());
+
+setStep(1);
+</script>
+</body>
+</html>
