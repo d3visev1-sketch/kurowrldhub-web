@@ -71,6 +71,17 @@
       <div id="metrics"></div>
     </div>
     <div class="stat">
+      <b>Make it yours</b>
+      <div class="row" style="margin-top:8px">
+        <input id="dispname" placeholder="Display name" maxlength="20"
+          style="flex:1;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#12131a;color:#fff" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="save">Save &amp; Enter World</button>
+      </div>
+      <div id="saved" style="font-size:12px;color:var(--cyan);margin-top:6px"></div>
+    </div>
+    <div class="stat">
       <b>Status</b>
       <div class="log" id="log">booting…</div>
     </div>
@@ -104,7 +115,7 @@ log("three.js ready ✓");
 let currentVrm = null, headBone = null;
 new GLTFLoader()
   .register(p => new VRMLoaderPlugin(p))
-  .load("avatar.vrm",
+  .load("../assets/characters/sample_alicia.vrm",
     (gltf) => {
       const vrm = gltf.userData.vrm;
       VRMUtils.removeUnnecessaryVertices(gltf.scene);
@@ -176,8 +187,12 @@ const mBars = {};
   }
 })();
 const Sm = { round:0, eyes:0, gap:0, mouth:0, jaw:0 };
+const Norm = { round:0, eyes:0, gap:0, mouth:0, jaw:0 };   // 0..1 normalized (the persisted payload values)
+const Tone = { skin:"", hair:"" };                          // hex, sampled from the video
 const sc = document.createElement("canvas"); const sctx = sc.getContext("2d", { willReadFrequently:true });
 const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
+const rgbToHex = (s)=>{ const m=/rgb\((\d+),(\d+),(\d+)\)/.exec(s||""); if(!m) return "";
+  return "#"+[1,2,3].map(i=>(+m[i]).toString(16).padStart(2,"0")).join(""); };
 function sampleColor(nx, ny){
   try{
     const w = video.videoWidth, h = video.videoHeight; if(!w) return null;
@@ -204,14 +219,15 @@ function updateFaceProfile(lm){
   for (const m of METRICS){
     Sm[m.key] = lerp(Sm[m.key], raw[m.key], 0.25);
     const t = Math.max(0, Math.min(1, (Sm[m.key]-m.lo)/(m.hi-m.lo)));
+    Norm[m.key] = t;                                         // remember normalized value for the payload
     mBars[m.key].bar.style.width = (t*100).toFixed(0)+"%";
     mBars[m.key].val.textContent = Sm[m.key].toFixed(2);
   }
   if ((frame++ % 8)===0){
     const skin = sampleColor(lm[50].x, lm[50].y);            // right cheek
-    if (skin) document.getElementById("skin").style.background = skin;
+    if (skin){ document.getElementById("skin").style.background = skin; Tone.skin = rgbToHex(skin); }
     const hair = sampleColor(lm[10].x, Math.max(0, lm[10].y - faceH*0.55)); // above forehead
-    if (hair) document.getElementById("hair").style.background = hair;
+    if (hair){ document.getElementById("hair").style.background = hair; Tone.hair = rgbToHex(hair); }
   }
 }
 
@@ -225,6 +241,31 @@ document.getElementById("enable").onclick = async () => {
   } catch(err){ log("camera unavailable (" + (err && err.name || err) + ") — this proof needs a real webcam"); }
 };
 document.getElementById("reset").onclick = ()=>{ S.hx=S.hy=S.hz=0; };
+
+// A3: persist the measured payload (tones + proportions) as sh_avatar, in the
+// exact shape hub_level._apply_web_avatar reads. Then hand off to the world.
+document.getElementById("save").onclick = ()=>{
+  const payload = {
+    v: 1,
+    name: (document.getElementById("dispname").value || "").trim(),
+    style: "anime_vrm",
+    tones: { skin: Tone.skin || "", hair: Tone.hair || "" },
+    proportions: {
+      faceRound: +Norm.round.toFixed(3), eyeSize: +Norm.eyes.toFixed(3),
+      eyeSpacing: +Norm.gap.toFixed(3),  mouthWidth: +Norm.mouth.toFixed(3),
+      jawWidth: +Norm.jaw.toFixed(3),
+    },
+    createdAt: Date.now(),
+  };
+  try { localStorage.setItem("sh_avatar", JSON.stringify(payload)); } catch(_){}
+  document.getElementById("saved").textContent =
+    "Saved ✓ skin " + (payload.tones.skin||"–") + " · eyeSize " + payload.proportions.eyeSize
+    + " · faceRound " + payload.proportions.faceRound;
+  log("saved sh_avatar payload ✓");
+  const params = new URLSearchParams(location.search);
+  const next = params.get("next");
+  if (next) location.href = next;           // e.g. ?next=../  (the bundled world)
+};
 
 function loop(){
   if (!running) return;
