@@ -178,7 +178,7 @@
         <div class="tray" id="tray"></div>
         <div class="swatches" id="swatches"></div>
 
-        <div class="note">🎨 <span>These are placeholders for now. Next milestone plugs in the <b>Ready Player Me</b> 3D creator right in this stage, so wardrobe items become real 3D pieces on your avatar.</span></div>
+        <div class="note">🎨 <span>These are placeholders for now. The <b>MetaPerson</b> 3D creator plugs right into this stage, so your selfie becomes a real rigged 3D avatar and wardrobe items become real 3D pieces.</span></div>
         <div class="row">
           <button class="btn ghost" id="backTo1">← Back</button>
           <button class="btn primary" id="toStep3">Continue →</button>
@@ -212,7 +212,7 @@
     </div>
   </div>
 
-  <p class="foot">Step 3 next: the Ready Player Me 3D creator slots into the avatar stage — same flow, real rigged 3D character.</p>
+  <p class="foot">The MetaPerson 3D creator slots into the avatar stage — same flow, real rigged 3D character from your selfie.</p>
 </div>
 
 <script>
@@ -224,7 +224,23 @@ const state = {
   name: "",
   cosmetics: {},          // category -> item index
   color: 0,
+  avatarUrl: null,        // live-scanned 3D avatar GLB url (from MetaPerson)
+  tones: null,            // {skin,hair} hex, measured from the scan (A3)
+  proportions: null,      // {faceRound,eyeSize,eyeSpacing,mouthWidth,jawWidth} 0..1
 };
+
+// ---- MetaPerson (Avatar SDK) live-scan config -----------------------------
+// Replacement for Ready Player Me (shut down Jan 31, 2026). Selfie -> rigged 3D
+// GLB, embedded via iframe. Get free credentials at https://accounts.avatarsdk.com
+// (first avatar is free) and paste them below to switch on the real 3D scan.
+// Until then the page falls back to the simple selfie capture.
+const META = {
+  clientId:     "",   // <-- paste your Avatar SDK client id
+  clientSecret: "",   // <-- paste your Avatar SDK client secret
+  iframe: "https://metaperson.avatarsdk.com/dev/v1.13.1/v3/iframe.html",
+  exportParams: { eventName:"set_export_parameters", format:"glb", lod:1, textureProfile:"1K.png", useZip:false },
+};
+const META_ENABLED = !!(META.clientId && META.clientSecret);
 
 // ---- customization catalog (placeholders until RPM 3D pieces land) --------
 const CATS = {
@@ -272,6 +288,11 @@ function capturePhoto(){
   const dw = w * s, dh = h * s;
   ctx.drawImage(v, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
   state.photo = c.toDataURL("image/jpeg", 0.9);
+  // A3: snapshot the live face measurement (tones + proportions) at capture time
+  if (window.__face) {
+    state.tones = window.__face.tones || null;
+    state.proportions = window.__face.proportions || null;
+  }
   showSnap(state.photo);
   stopCamera();
 }
@@ -383,13 +404,56 @@ function renderSummary(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
+// ---- MetaPerson live 3D scan (embedded iframe) ----------------------------
+function initMetaPerson(){
+  if(!META_ENABLED) return;               // no credentials yet -> keep selfie fallback
+  const stage = $("stage");
+  // swap the webcam stage for the MetaPerson creator iframe
+  stage.innerHTML = "";
+  const frame = document.createElement("iframe");
+  frame.id = "mpFrame";
+  frame.allow = "camera *; microphone *; clipboard-write; fullscreen";
+  frame.style.cssText = "width:100%;height:100%;border:0;display:block";
+  frame.src = META.iframe;
+  stage.appendChild(frame);
+  // hide the selfie buttons; the iframe has its own camera + export controls
+  $("scanActions").classList.add("hide");
+  $("retakeActions").classList.add("hide");
+  if($("camHint")) $("camHint").innerHTML = "Take a selfie in the panel above, then press <b>Export</b> to build your 3D avatar.";
+
+  window.addEventListener("message", (e)=>{
+    if(!/avatarsdk\.com$/.test((()=>{ try{ return new URL(e.origin).hostname; }catch(_){ return ""; }})())) return;
+    let msg = e.data;
+    if(typeof msg === "string"){ try{ msg = JSON.parse(msg); }catch(_){ return; } }
+    if(!msg || !msg.eventName) return;
+    const win = frame.contentWindow;
+    switch(msg.eventName){
+      case "metaperson_creator_loaded":
+      case "unity_loaded":
+        win.postMessage({ eventName:"authenticate", clientId:META.clientId, clientSecret:META.clientSecret }, "*");
+        win.postMessage(META.exportParams, "*");
+        break;
+      case "model_exported":
+        if(msg.url){
+          state.avatarUrl = msg.url;
+          if($("toStep2")) $("toStep2").disabled = false;
+          if($("camHint")) $("camHint").innerHTML = "✅ 3D avatar ready. Continue to customize.";
+        }
+        break;
+    }
+  });
+}
+
 // ---- persist + handoff to the game ---------------------------------------
 function buildPayload(){
   return {
     v: 1,
     name: state.name || "Player",
     style: "signature_chibi",
-    facePhoto: state.photo,          // becomes the RPM selfie input in step-2 milestone
+    facePhoto: state.photo,          // selfie fallback (used if no live 3D scan)
+    avatarUrl: state.avatarUrl,      // live-scanned rigged 3D GLB (MetaPerson) -> the game loads this
+    tones: state.tones || { skin:"", hair:"" },          // A3: measured skin/hair, drives in-world tint
+    proportions: state.proportions || {},                // A3: measured face shape, drives bone-scaling
     cosmetics: state.cosmetics,
     accentColor: COLORS[state.color],
     createdAt: new Date().toISOString(),
@@ -431,7 +495,58 @@ $("editAgain").onclick = () => setStep(2);
 $("launchGame").onclick = launchGame;
 $("nameInput") && $("nameInput").addEventListener("input", e=>state.name=e.target.value.trim());
 
+initMetaPerson();   // switches on the live 3D scan iframe once credentials are set
 setStep(1);
+</script>
+
+<!-- A3: live face measurement (MediaPipe). Runs while the camera preview is on and
+     writes window.__face = {tones,proportions}; capturePhoto() snapshots it. -->
+<script type="module">
+import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+const METRICS = [
+  { key:"faceRound",  a:"round", lo:0.60, hi:1.10 },
+  { key:"eyeSize",    a:"eyes",  lo:0.10, hi:0.30 },
+  { key:"eyeSpacing", a:"gap",   lo:0.20, hi:0.50 },
+  { key:"mouthWidth", a:"mouth", lo:0.25, hi:0.65 },
+  { key:"jawWidth",   a:"jaw",   lo:0.45, hi:1.00 },
+];
+const lerp=(a,b,t)=>a+(b-a)*t, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const rgbToHex=(r,g,b)=>"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+const Sm={round:0,eyes:0,gap:0,mouth:0,jaw:0}; let primed=false;
+const sc=document.createElement("canvas"), sctx=sc.getContext("2d",{willReadFrequently:true});
+function sample(v,nx,ny){ try{ const w=v.videoWidth,h=v.videoHeight; if(!w)return null;
+  if(sc.width!==w){sc.width=w;sc.height=h;} sctx.drawImage(v,0,0,w,h);
+  const x=Math.max(0,Math.min(w-1,nx*w|0)), y=Math.max(0,Math.min(h-1,ny*h|0));
+  const d=sctx.getImageData(x,y,1,1).data; return [d[0],d[1],d[2]]; }catch(_){ return null; } }
+let fl=null;
+(async()=>{
+  try{
+    const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    fl=await FaceLandmarker.createFromOptions(fs,{ baseOptions:{ modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" }, runningMode:"VIDEO", numFaces:1 });
+    loop();
+  }catch(e){ /* no measurement → Godot uses neutral defaults */ }
+})();
+function loop(){
+  requestAnimationFrame(loop);
+  const v=document.getElementById("video");
+  if(!fl||!v||!v.srcObject||v.readyState<2||v.paused) return;
+  let res; try{ res=fl.detectForVideo(v,performance.now()); }catch(_){ return; }
+  if(!res||!res.faceLandmarks||!res.faceLandmarks.length) return;
+  const lm=res.faceLandmarks[0];
+  const faceW=dist(lm[234],lm[454]), faceH=dist(lm[10],lm[152]);
+  if(faceW<1e-4||faceH<1e-4) return;
+  const eyeW=(dist(lm[33],lm[133])+dist(lm[362],lm[263]))/2;
+  const raw={ round:faceW/faceH, eyes:eyeW/faceW, gap:dist(lm[133],lm[362])/faceW,
+              mouth:dist(lm[61],lm[291])/faceW, jaw:dist(lm[172],lm[397])/faceW };
+  const prop={};
+  for(const m of METRICS){ Sm[m.a]=lerp(Sm[m.a], raw[m.a], primed?0.25:1);
+    prop[m.key]=+Math.max(0,Math.min(1,(Sm[m.a]-m.lo)/(m.hi-m.lo))).toFixed(3); }
+  primed=true;
+  const tones={};
+  const sk=sample(v,lm[50].x,lm[50].y); if(sk) tones.skin=rgbToHex(sk[0],sk[1],sk[2]);
+  const hr=sample(v,lm[10].x,Math.max(0,lm[10].y-faceH*0.55)); if(hr) tones.hair=rgbToHex(hr[0],hr[1],hr[2]);
+  window.__face={ tones, proportions:prop };
+}
 </script>
 </body>
 </html>
