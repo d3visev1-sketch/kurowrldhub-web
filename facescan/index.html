@@ -61,6 +61,16 @@
       <div style="font-size:12px;color:var(--muted)">mouth open</div>
     </div>
     <div class="stat">
+      <b>Your face profile</b> <span style="color:var(--muted);font-size:12px">— measured live from your face (this is what personalizes the avatar)</span>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <div id="skin" style="width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#333"></div>
+        <span style="font-size:12px;color:var(--muted)">skin tone</span>
+        <div id="hair" style="width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#333;margin-left:10px"></div>
+        <span style="font-size:12px;color:var(--muted)">hair tone</span>
+      </div>
+      <div id="metrics"></div>
+    </div>
+    <div class="stat">
       <b>Status</b>
       <div class="log" id="log">booting…</div>
     </div>
@@ -144,6 +154,67 @@ let running = false;
 const S = { hx:0, hy:0, hz:0, blink:0, aa:0 };   // smoothed state
 const lerp = (a,b,t)=>a+(b-a)*t;
 
+// ---- "face profile": real facial proportions from the 478 landmarks -------
+// normalized by face width so they describe your face SHAPE, not distance to cam
+const METRICS = [
+  { key:"round", label:"Face roundness", lo:0.60, hi:1.10 },
+  { key:"eyes",  label:"Eye size",       lo:0.10, hi:0.30 },
+  { key:"gap",   label:"Eye spacing",    lo:0.20, hi:0.50 },
+  { key:"mouth", label:"Mouth width",    lo:0.25, hi:0.65 },
+  { key:"jaw",   label:"Jaw width",      lo:0.45, hi:1.00 },
+];
+const mBars = {};
+(function buildMetrics(){
+  const box = document.getElementById("metrics");
+  for (const m of METRICS){
+    const row = document.createElement("div");
+    row.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+        <span>${m.label}</span><span id="v_${m.key}">–</span></div>
+        <div class="bar"><i id="b_${m.key}"></i></div>`;
+    box.appendChild(row);
+    mBars[m.key] = { bar: row.querySelector("#b_"+m.key), val: row.querySelector("#v_"+m.key) };
+  }
+})();
+const Sm = { round:0, eyes:0, gap:0, mouth:0, jaw:0 };
+const sc = document.createElement("canvas"); const sctx = sc.getContext("2d", { willReadFrequently:true });
+const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
+function sampleColor(nx, ny){
+  try{
+    const w = video.videoWidth, h = video.videoHeight; if(!w) return null;
+    if (sc.width!==w){ sc.width=w; sc.height=h; }
+    sctx.drawImage(video, 0, 0, w, h);
+    const x = Math.max(0, Math.min(w-1, nx*w|0)), y = Math.max(0, Math.min(h-1, ny*h|0));
+    const d = sctx.getImageData(x, y, 1, 1).data;
+    return `rgb(${d[0]},${d[1]},${d[2]})`;
+  }catch(_){ return null; }
+}
+let frame = 0;
+function updateFaceProfile(lm){
+  const faceW = dist(lm[234], lm[454]);
+  const faceH = dist(lm[10],  lm[152]);
+  if (faceW < 1e-4 || faceH < 1e-4) return;
+  const eyeW = (dist(lm[33],lm[133]) + dist(lm[362],lm[263])) / 2;
+  const raw = {
+    round: faceW/faceH,
+    eyes:  eyeW/faceW,
+    gap:   dist(lm[133],lm[362])/faceW,
+    mouth: dist(lm[61],lm[291])/faceW,
+    jaw:   dist(lm[172],lm[397])/faceW,
+  };
+  for (const m of METRICS){
+    Sm[m.key] = lerp(Sm[m.key], raw[m.key], 0.25);
+    const t = Math.max(0, Math.min(1, (Sm[m.key]-m.lo)/(m.hi-m.lo)));
+    mBars[m.key].bar.style.width = (t*100).toFixed(0)+"%";
+    mBars[m.key].val.textContent = Sm[m.key].toFixed(2);
+  }
+  if ((frame++ % 8)===0){
+    const skin = sampleColor(lm[50].x, lm[50].y);            // right cheek
+    if (skin) document.getElementById("skin").style.background = skin;
+    const hair = sampleColor(lm[10].x, Math.max(0, lm[10].y - faceH*0.55)); // above forehead
+    if (hair) document.getElementById("hair").style.background = hair;
+  }
+}
+
 document.getElementById("enable").onclick = async () => {
   if (!faceLandmarker){ log("face model still loading, try again in a moment"); return; }
   try {
@@ -185,6 +256,7 @@ function loop(){
   headv.textContent = (S.hy*57.3).toFixed(0) + "°";
   blinkbar.style.width = (S.blink*100).toFixed(0) + "%";
   mouthbar.style.width = (Math.min(S.aa,1)*100).toFixed(0) + "%";
+  updateFaceProfile(lm);   // live facial proportions + skin/hair tone
 }
 </script>
 </body>
