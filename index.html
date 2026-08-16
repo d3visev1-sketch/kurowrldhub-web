@@ -445,6 +445,18 @@ function initMetaPerson(){
 }
 
 // ---- persist + handoff to the game ---------------------------------------
+// Translate the picker UI (category -> emoji index) into the shape the GAME reads:
+// { outfit:<hex tint>, hat:<id>, effect:<id> }. Hair/skin/face stay scan-derived.
+const HAT_IDS = ["cap","crown","bow","cap","cap","halo"];   // maps CATS.Hats order
+const EFF_IDS = ["sparkle","glow","glow","glow","glow","sparkle"];  // maps CATS.Effects order
+function gameCosmetics(){
+  const c = { outfit: COLORS[state.color] || "" };   // chosen colour = outfit tint
+  const h = state.cosmetics["Hats"];
+  if (h != null && HAT_IDS[h]) c.hat = HAT_IDS[h];
+  const e = state.cosmetics["Effects"];
+  if (e != null && EFF_IDS[e]) c.effect = EFF_IDS[e];
+  return c;
+}
 function buildPayload(){
   return {
     v: 1,
@@ -454,7 +466,8 @@ function buildPayload(){
     avatarUrl: state.avatarUrl,      // live-scanned rigged 3D GLB (MetaPerson) -> the game loads this
     tones: state.tones || { skin:"", hair:"" },          // A3: measured skin/hair, drives in-world tint
     proportions: state.proportions || {},                // A3: measured face shape, drives bone-scaling
-    cosmetics: state.cosmetics,
+    cosmetics: gameCosmetics(),      // B1: {outfit,hat,effect} the game applies to the VRM
+    cosmeticsUI: state.cosmetics,    // raw picker selection (for edit-again / display)
     accentColor: COLORS[state.color],
     createdAt: new Date().toISOString(),
   };
