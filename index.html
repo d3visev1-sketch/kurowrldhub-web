@@ -288,10 +288,23 @@ function capturePhoto(){
   const dw = w * s, dh = h * s;
   ctx.drawImage(v, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
   state.photo = c.toDataURL("image/jpeg", 0.9);
-  // A3: snapshot the live face measurement (tones + proportions) at capture time
+  // A3: snapshot the live face measurement (tones + proportions) at capture time.
   if (window.__face) {
     state.tones = window.__face.tones || null;
     state.proportions = window.__face.proportions || null;
+  }
+  // Robust fallback: even if MediaPipe hasn't produced a measurement (slow load,
+  // no detection yet), sample skin & hair tones straight from the captured photo,
+  // so the avatar is ALWAYS styled by the scan. Face is centred in the 3:4 crop.
+  if (!state.tones || !state.tones.skin || !state.tones.hair) {
+    try {
+      const px = (nx, ny) => { const d = ctx.getImageData(Math.round(nx*c.width), Math.round(ny*c.height), 1, 1).data;
+        return "#" + [d[0],d[1],d[2]].map(x=>x.toString(16).padStart(2,"0")).join(""); };
+      const t = state.tones || {};
+      if (!t.skin) t.skin = px(0.50, 0.52);   // cheek/centre → skin
+      if (!t.hair) t.hair = px(0.50, 0.12);   // top of head → hair
+      state.tones = t;
+    } catch(_) {}
   }
   showSnap(state.photo);
   stopCamera();
@@ -334,7 +347,22 @@ $("fileInput").addEventListener("change", (e) => {
   const f = e.target.files && e.target.files[0];
   if(!f) return;
   const r = new FileReader();
-  r.onload = () => { state.photo = r.result; showSnap(r.result); };
+  r.onload = () => {
+    state.photo = r.result;
+    showSnap(r.result);
+    // sample skin/hair tones from the uploaded photo so the avatar is styled too
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const cc = document.createElement("canvas"); cc.width = img.width; cc.height = img.height;
+        const cx = cc.getContext("2d"); cx.drawImage(img, 0, 0);
+        const px = (nx, ny) => { const d = cx.getImageData(Math.round(nx*cc.width), Math.round(ny*cc.height), 1, 1).data;
+          return "#" + [d[0],d[1],d[2]].map(x=>x.toString(16).padStart(2,"0")).join(""); };
+        state.tones = { skin: px(0.50, 0.55), hair: px(0.50, 0.12) };
+      } catch(_) {}
+    };
+    img.src = r.result;
+  };
   r.readAsDataURL(f);
 });
 
