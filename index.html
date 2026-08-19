@@ -7,11 +7,10 @@
 <style>
   :root{
     --ground:#0e0f14; --ground-2:#111318; --panel:#171a21; --panel-2:#1e222b;
-    --elev:#252b36; --line:#2b313d; --line-soft:#222833;
+    --line:#2b313d; --line-soft:#222833;
     --text:#f3f5fa; --muted:#9aa4b6; --faint:#6a7488;
-    --cyan:#37e1ff; --cyan-ink:#0a2a33; --amber:#ffcf45; --red:#ff4d5e; --mint:#57e6b0;
-    --radius:18px; --radius-sm:12px;
-    --shadow:0 24px 60px -20px rgba(0,0,0,.75);
+    --cyan:#37e1ff; --cyan-ink:#0a2a33; --mint:#57e6b0;
+    --radius:18px; --shadow:0 24px 60px -20px rgba(0,0,0,.75);
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
@@ -23,100 +22,47 @@
       var(--ground);
     color:var(--text); font-family:var(--font); line-height:1.5;
     -webkit-font-smoothing:antialiased; min-height:100%;
-    display:flex; flex-direction:column; align-items:center;
-    padding:clamp(16px,3vw,40px);
+    display:flex; flex-direction:column; align-items:center; padding:clamp(16px,3vw,40px);
   }
   .shell{width:100%; max-width:940px; margin:auto}
-
-  /* header + stepper */
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em;font-size:18px;margin-bottom:4px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin-bottom:4px}
   .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan)}
   .eyebrow{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin:0 0 6px}
   h1{font-size:clamp(24px,4.4vw,38px);line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
   h1 .hl{color:var(--cyan)}
   .lede{color:var(--muted);margin:0 0 22px;max-width:56ch;font-size:clamp(14px,1.5vw,16px)}
 
-  .steps{display:flex;gap:10px;margin:0 0 20px;flex-wrap:wrap}
-  .step{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:40px;
-    border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600}
-  .step .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
-    background:var(--panel-2);color:var(--faint);font-size:12px;border:1px solid var(--line)}
-  .step.active{border-color:var(--cyan);color:var(--text);box-shadow:0 0 0 1px rgba(55,225,255,.25)}
-  .step.active .n{background:var(--cyan);color:#04222b;border-color:var(--cyan)}
-  .step.done .n{background:var(--mint);color:#053124;border-color:var(--mint)}
-  .step.done{color:var(--text)}
-
-  /* layout */
   .grid{display:grid;grid-template-columns:1fr;gap:22px;align-items:start}
-  @media(min-width:820px){.grid{grid-template-columns:minmax(320px,420px) 1fr}}
+  @media(min-width:820px){.grid{grid-template-columns:minmax(300px,380px) 1fr}}
 
-  /* avatar stage (RPM 3D creator drops in here in step 2) */
-  .stage-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+  /* preview */
+  .stage-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);position:sticky;top:16px}
   .stage{position:relative;aspect-ratio:3/4;width:100%;border-radius:16px;overflow:hidden;
-    background:radial-gradient(85% 60% at 50% 24%, rgba(55,225,255,.16), transparent 60%),linear-gradient(180deg,#161b24,#10141b);
+    background:radial-gradient(85% 60% at 50% 26%, rgba(55,225,255,.16), transparent 60%),linear-gradient(180deg,#161b24,#10141b);
     border:1px solid var(--line-soft);display:grid;place-items:center}
-  video,canvas,img.snap{width:100%;height:100%;object-fit:cover;display:block}
-  video{transform:scaleX(-1)} /* mirror the live selfie */
-  .stage .placeholder{color:var(--faint);text-align:center;padding:24px;font-size:14px}
-  .stage .placeholder .big{font-size:40px;margin-bottom:8px}
-  .ring{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:52%;height:34px;border-radius:50%;
-    background:radial-gradient(closest-side,rgba(55,225,255,.5),rgba(55,225,255,.05) 70%,transparent);pointer-events:none;
-    animation:spin 6s linear infinite}
-  @keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
-  .chip{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px;
-    background:rgba(10,13,18,.72);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;backdrop-filter:blur(4px)}
-  .chip.live{color:var(--amber)} .chip .rd{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.7s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,94,.55)}70%{box-shadow:0 0 0 7px rgba(255,77,94,0)}100%{box-shadow:0 0 0 0 rgba(255,77,94,0)}}
-  .lock-badge{position:absolute;top:12px;right:12px;background:rgba(10,13,18,.72);border:1px solid var(--line);
-    border-radius:20px;padding:5px 10px;font-size:10.5px;color:var(--cyan);font-weight:700;backdrop-filter:blur(4px)}
+  .stage svg{width:78%;height:78%;filter:drop-shadow(0 14px 26px rgba(0,0,0,.45))}
+  .pv-name{text-align:center;font-weight:800;font-size:18px;margin-top:12px}
+  .pv-sub{text-align:center;color:var(--faint);font-size:12px;margin-top:2px}
 
-  .stage-actions{display:flex;gap:10px;margin-top:12px}
-  .hint{color:var(--faint);font-size:12px;margin-top:10px;text-align:center}
-
-  /* right column panels */
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(16px,2.2vw,22px);box-shadow:var(--shadow)}
-  .panel h3{margin:0 0 4px;font-size:18px}
-  .panel p.sub{margin:0 0 16px;color:var(--muted);font-size:13.5px}
-
   label.field{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px;letter-spacing:.02em}
-  input.name{width:100%;background:var(--ground-2);border:1px solid var(--line);color:var(--text);
-    border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;outline:none}
+  input.name{width:100%;background:var(--ground-2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;outline:none}
   input.name:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(55,225,255,.15)}
 
-  .cats{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}
-  .cat{padding:8px 13px;border-radius:30px;border:1px solid var(--line);background:var(--panel-2);
-    color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
-  .cat.active{border-color:var(--cyan);color:var(--text);background:var(--cyan-ink)}
-  .tray{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  @media(max-width:400px){.tray{grid-template-columns:repeat(3,1fr)}}
-  .item{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel-2),var(--ground-2));
-    display:grid;place-items:center;font-size:22px;cursor:pointer;position:relative;transition:transform .08s}
-  .item:hover{transform:translateY(-2px)}
-  .item.sel{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(55,225,255,.35);background:linear-gradient(160deg,#183642,#10141b)}
-  .item.sel::after{content:"✓";position:absolute;top:4px;right:6px;color:var(--cyan);font-size:12px;font-weight:800}
-  .swatches{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-  .sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .section{margin-top:20px}
+  .section h4{margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:flex;justify-content:space-between}
+  .section h4 .pick{color:var(--text);text-transform:none;letter-spacing:0;font-weight:600}
+  .swatches{display:flex;gap:9px;flex-wrap:wrap}
+  .sw{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;position:relative;transition:transform .08s}
+  .sw:hover{transform:translateY(-2px)}
   .sw.sel{border-color:#fff;box-shadow:0 0 0 2px var(--cyan)}
+  .sw.sel::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 
-  .note{display:flex;gap:10px;align-items:flex-start;background:var(--cyan-ink);border:1px solid #16576a;
-    border-radius:12px;padding:12px 14px;color:#bdeeff;font-size:12.5px;margin-top:18px}
-  .note b{color:#fff}
-
-  /* buttons */
-  .btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
-    font-family:inherit;font-weight:700;font-size:14px;border-radius:12px;padding:13px 18px;cursor:pointer;flex:1;transition:filter .1s}
-  .btn:hover{filter:brightness(1.12)} .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font-family:inherit;font-weight:700;font-size:15px;border-radius:12px;padding:15px 18px;cursor:pointer;flex:1;transition:filter .1s}
+  .btn:hover{filter:brightness(1.12)}
   .btn.primary{background:linear-gradient(180deg,#4fe7ff,#22c6e6);color:#04222b;border-color:transparent;box-shadow:0 10px 24px -10px rgba(55,225,255,.6)}
-  .btn.ghost{background:transparent}
-  .row{display:flex;gap:12px;margin-top:20px}
-
-  .success{text-align:center;padding:10px 4px}
-  .success .big{font-size:52px}
-  .success pre{text-align:left;background:var(--ground-2);border:1px solid var(--line);border-radius:12px;
-    padding:14px;font-size:12px;color:var(--mint);overflow:auto;max-height:200px}
-  .hide{display:none !important}
+  .row{display:flex;gap:12px;margin-top:24px}
   .foot{color:var(--faint);font-size:12px;margin-top:26px;text-align:center}
-  a{color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -124,471 +70,160 @@
   <div class="brand"><span class="dot"></span> Social Hub</div>
   <p class="eyebrow">Create your avatar</p>
   <h1>Make a <span class="hl">you</span> that comes alive</h1>
-  <p class="lede">Scan your face, make it yours, and step into the world. Your look mirrors you — retake anytime.</p>
-
-  <div class="steps">
-    <div class="step active" data-step="1"><span class="n">1</span> Scan</div>
-    <div class="step" data-step="2"><span class="n">2</span> Customize</div>
-    <div class="step" data-step="3"><span class="n">3</span> Enter world</div>
-  </div>
+  <p class="lede">Pick your look — skin, hair, and onesie. No camera, no sign-up. This is what walks into the world with you.</p>
 
   <div class="grid">
-    <!-- avatar stage -->
     <div class="stage-card">
-      <div class="stage" id="stage">
-        <div class="placeholder" id="ph"><div class="big">📷</div>Camera preview appears here</div>
-        <video id="video" autoplay playsinline muted class="hide"></video>
-        <img id="snap" class="snap hide" alt="your capture">
-        <div class="chip live hide" id="liveChip"><span class="rd"></span> LIVE</div>
-        <div class="lock-badge hide" id="lockBadge">🔒 Signature Chibi</div>
-        <div class="ring hide" id="ring"></div>
+      <div class="stage">
+        <svg id="chibi" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- ears -->
+          <circle id="earL" cx="66"  cy="52" r="17"/>
+          <circle id="earR" cx="134" cy="52" r="17"/>
+          <!-- body/suit -->
+          <path id="body" d="M56 150 q-6 -60 44 -60 q50 0 44 60 l6 66 q0 14 -14 14 l-72 0 q-14 0 -14 -14 z"/>
+          <!-- feet -->
+          <ellipse id="footL" cx="82"  cy="228" rx="15" ry="10"/>
+          <ellipse id="footR" cx="118" cy="228" rx="15" ry="10"/>
+          <!-- hood -->
+          <circle id="hood" cx="100" cy="86" r="62"/>
+          <!-- face -->
+          <ellipse id="face" cx="100" cy="92" rx="44" ry="46"/>
+          <!-- hair tuft -->
+          <path id="hair" d="M100 50 q-26 2 -30 26 q16 -14 30 -12 q14 -2 30 12 q-4 -24 -30 -26 z"/>
+          <!-- eyes -->
+          <ellipse id="eyeL" cx="84"  cy="96" rx="8" ry="11"/>
+          <ellipse id="eyeR" cx="116" cy="96" rx="8" ry="11"/>
+          <circle cx="86" cy="92" r="3" fill="#fff"/>
+          <circle cx="118" cy="92" r="3" fill="#fff"/>
+          <!-- blush -->
+          <ellipse cx="74"  cy="110" rx="8" ry="5" fill="#ff9ab0" opacity=".5"/>
+          <ellipse cx="126" cy="110" rx="8" ry="5" fill="#ff9ab0" opacity=".5"/>
+          <!-- smile -->
+          <path d="M92 114 q8 8 16 0" fill="none" stroke="#8a5a44" stroke-width="2.4" stroke-linecap="round"/>
+          <!-- zipper -->
+          <line x1="100" y1="150" x2="100" y2="214" stroke="rgba(0,0,0,.15)" stroke-width="2"/>
+        </svg>
       </div>
-      <div class="stage-actions" id="scanActions">
-        <button class="btn primary" id="startCam">Turn on camera</button>
-        <button class="btn ghost" id="capture" disabled>Capture</button>
-      </div>
-      <div class="stage-actions hide" id="retakeActions">
-        <button class="btn ghost" id="retake">↺ Retake</button>
-      </div>
-      <div class="hint" id="camHint">Your photo never leaves your device until you enter the world.</div>
-      <input type="file" id="fileInput" accept="image/*" class="hide">
+      <div class="pv-name" id="pvName">Player</div>
+      <div class="pv-sub">This is your look</div>
     </div>
 
-    <!-- step panels -->
-    <div>
-      <!-- STEP 1 -->
-      <div class="panel" id="panel1">
-        <h3>Scan your face</h3>
-        <p class="sub">A quick selfie is all we need. We turn it into a stylized 3D chibi that looks like you.</p>
-        <div class="note">💡 <span>Good light, face centered, no hat. This becomes your <b>face, hair &amp; skin</b> — you can retake it any time to change them.</span></div>
-        <div class="row">
-          <button class="btn ghost" id="useUpload">Upload a photo instead</button>
-          <button class="btn primary" id="toStep2" disabled>Continue →</button>
-        </div>
+    <div class="panel">
+      <label class="field" for="nameInput">Display name</label>
+      <input class="name" id="nameInput" maxlength="18" placeholder="e.g. Kuro" autocomplete="off">
+
+      <div class="section">
+        <h4>Skin tone <span class="pick" id="skinName">Natural</span></h4>
+        <div class="swatches" id="skinSw"></div>
+      </div>
+      <div class="section">
+        <h4>Hair &amp; eyes <span class="pick" id="hairName">Natural</span></h4>
+        <div class="swatches" id="hairSw"></div>
+      </div>
+      <div class="section">
+        <h4>Onesie <span class="pick" id="onesieName">Cream</span></h4>
+        <div class="swatches" id="onesieSw"></div>
       </div>
 
-      <!-- STEP 2 -->
-      <div class="panel hide" id="panel2">
-        <h3>Make it yours</h3>
-        <p class="sub">Face, hair &amp; skin come from your scan. Everything below is unlimited &amp; free.</p>
-        <label class="field" for="nameInput">Display name</label>
-        <input class="name" id="nameInput" maxlength="18" placeholder="e.g. Kuro" autocomplete="off">
-
-        <div class="cats" id="cats"></div>
-        <div class="tray" id="tray"></div>
-        <div class="swatches" id="swatches"></div>
-
-        <div class="note">🎨 <span>These are placeholders for now. The <b>MetaPerson</b> 3D creator plugs right into this stage, so your selfie becomes a real rigged 3D avatar and wardrobe items become real 3D pieces.</span></div>
-        <div class="row">
-          <button class="btn ghost" id="backTo1">← Back</button>
-          <button class="btn primary" id="toStep3">Continue →</button>
-        </div>
-      </div>
-
-      <!-- STEP 3 -->
-      <div class="panel hide" id="panel3">
-        <h3>Ready to go live</h3>
-        <p class="sub">This is what enters the world with you.</p>
-        <div id="summary"></div>
-        <div class="row">
-          <button class="btn ghost" id="backTo2">← Back</button>
-          <button class="btn primary" id="enterWorld">Enter the world →</button>
-        </div>
-      </div>
-
-      <!-- DONE -->
-      <div class="panel hide" id="panelDone">
-        <div class="success">
-          <div class="big">✨</div>
-          <h3>You're all set!</h3>
-          <p class="sub">Your avatar is saved on this device and ready for the world.</p>
-          <pre id="payloadOut"></pre>
-          <div class="row">
-            <button class="btn ghost" id="editAgain">Edit again</button>
-            <button class="btn primary" id="launchGame">Launch Social Hub</button>
-          </div>
-        </div>
+      <div class="row">
+        <button class="btn primary" id="enterWorld">Enter the world →</button>
       </div>
     </div>
   </div>
-
-  <p class="foot">The MetaPerson 3D creator slots into the avatar stage — same flow, real rigged 3D character from your selfie.</p>
+  <p class="foot">Your look is saved on this device and follows you into the 3D world. You can change your onesie any time in-world with the 👕 button.</p>
 </div>
 
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = {
-  step: 1,
-  photo: null,            // dataURL
-  name: "",
-  cosmetics: {},          // category -> item index
-  color: 0,
-  avatarUrl: null,        // live-scanned 3D avatar GLB url (from MetaPerson)
-  tones: null,            // {skin,hair} hex, measured from the scan (A3)
-  proportions: null,      // {faceRound,eyeSize,eyeSpacing,mouthWidth,jawWidth} 0..1
-};
 
-// ---- MetaPerson (Avatar SDK) live-scan config -----------------------------
-// Replacement for Ready Player Me (shut down Jan 31, 2026). Selfie -> rigged 3D
-// GLB, embedded via iframe. Get free credentials at https://accounts.avatarsdk.com
-// (first avatar is free) and paste them below to switch on the real 3D scan.
-// Until then the page falls back to the simple selfie capture.
-const META = {
-  clientId:     "",   // <-- paste your Avatar SDK client id
-  clientSecret: "",   // <-- paste your Avatar SDK client secret
-  iframe: "https://metaperson.avatarsdk.com/dev/v1.13.1/v3/iframe.html",
-  exportParams: { eventName:"set_export_parameters", format:"glb", lod:1, textureProfile:"1K.png", useZip:false },
-};
-const META_ENABLED = !!(META.clientId && META.clientSecret);
+// ---- palettes -------------------------------------------------------------
+// Each entry: name, tint (hex sent to the game), display (swatch/preview colour).
+// SKIN tints MULTIPLY the peach face texture; ONESIE tints multiply the cream suit;
+// HAIR uses a colourise shader (any colour shows, even light). "Natural" = #ffffff
+// (identity: keeps the model as authored).
+const PEACH = "#f0c8a8", CREAM = "#f4efe9", HAIRBASE = "#5a3f28";
+const SKINS = [
+  {n:"Natural", t:"#ffffff"}, {n:"Fair", t:"#fff0e2"}, {n:"Light", t:"#efd0b2"},
+  {n:"Tan", t:"#d9ad84"}, {n:"Bronze", t:"#c39160"}, {n:"Deep", t:"#a06f48"}, {n:"Rich", t:"#7d5334"},
+];
+const HAIRS = [
+  {n:"Natural", t:"#ffffff", d:HAIRBASE}, {n:"Black", t:"#2b2b31", d:"#2b2b31"},
+  {n:"Chestnut", t:"#8a5a34", d:"#8a5a34"}, {n:"Auburn", t:"#a4432a", d:"#a4432a"},
+  {n:"Blonde", t:"#e8c874", d:"#e8c874"}, {n:"Platinum", t:"#ded3c0", d:"#ded3c0"},
+  {n:"Pink", t:"#ff8fc7", d:"#ff8fc7"}, {n:"Red", t:"#e0504a", d:"#e0504a"},
+  {n:"Blue", t:"#5a86e0", d:"#5a86e0"}, {n:"Teal", t:"#2fb6b0", d:"#2fb6b0"},
+  {n:"Green", t:"#6cc06a", d:"#6cc06a"}, {n:"Purple", t:"#a878e6", d:"#a878e6"},
+  {n:"Silver", t:"#c6ccd6", d:"#c6ccd6"},
+];
+const ONESIES = [
+  {n:"Cream", t:"#ffffff"}, {n:"Bubblegum", t:"#ff9ec4"}, {n:"Sky", t:"#8fc9f0"},
+  {n:"Matcha", t:"#a8e0b0"}, {n:"Lavender", t:"#c3a6ff"}, {n:"Honey", t:"#ffcf6b"},
+  {n:"Teddy", t:"#c08a5a"}, {n:"Rosie", t:"#ff8f8f"}, {n:"Grape", t:"#9a7bd8"},
+  {n:"Charcoal", t:"#6b7280"}, {n:"Cherry", t:"#e0556a"}, {n:"Ocean", t:"#3fb6c4"}, {n:"Forest", t:"#4f8a52"},
+];
 
-// ---- customization catalog (placeholders until RPM 3D pieces land) --------
-const CATS = {
-  Outfit:  ["👕","🧥","👗","🥋","🦺","🧦","👘","🥼"],
-  Shoes:   ["👟","🥾","🩴","👢","🥿","👞"],
-  Hats:    ["🧢","🎩","👒","⛑️","🪖","🎓"],
-  Bags:    ["🎒","👜","👝","💼","🛍️"],
-  Effects: ["✨","🔥","❄️","⚡","🌈","💫"],
-  Emotes:  ["👋","💃","😎","🙌","🕺","❤️"],
-};
-const COLORS = ["#37e1ff","#ff7ab6","#ffcf45","#57e6b0","#a78bfa","#ff8c42","#f3f5fa","#2b2b33"];
-let activeCat = "Outfit";
+const sel = { name:"", skin:0, hair:0, onesie:0 };
 
-// ---- webcam ---------------------------------------------------------------
-let stream = null;
-async function startCamera(){
-  $("camHint").textContent = "Requesting camera…";
-  try{
-    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user", width:640, height:853 }, audio:false });
-    const v = $("video");
-    v.srcObject = stream;
-    $("ph").classList.add("hide");
-    v.classList.remove("hide");
-    $("liveChip").classList.remove("hide");
-    $("startCam").classList.add("hide");
-    $("capture").disabled = false;
-    $("camHint").textContent = "Center your face, then Capture.";
-  }catch(err){
-    // graceful fallback — no camera / denied
-    $("camHint").innerHTML = "Couldn't use the camera ("+ (err && err.name || "unavailable") +"). <b>Upload a photo</b> instead.";
-    $("startCam").classList.add("hide");
-    revealUpload();
-  }
-}
-function stopCamera(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+// ---- colour helpers -------------------------------------------------------
+function hx(h){ const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:[255,255,255]; }
+function toHex(a){ return "#"+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join(""); }
+function mul(a,b){ const x=hx(a),y=hx(b); return toHex([x[0]*y[0]/255,x[1]*y[1]/255,x[2]*y[2]/255]); }
 
-function capturePhoto(){
-  const v = $("video");
-  const w = v.videoWidth || 640, h = v.videoHeight || 853;
-  const c = document.createElement("canvas");
-  c.width = 720; c.height = 960;                       // 3:4 portrait
-  const ctx = c.getContext("2d");
-  ctx.translate(c.width, 0); ctx.scale(-1, 1);         // un-mirror to match the live preview
-  const s = Math.max(c.width / w, c.height / h);       // cover-fit, centered
-  const dw = w * s, dh = h * s;
-  ctx.drawImage(v, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
-  state.photo = c.toDataURL("image/jpeg", 0.9);
-  // A3: snapshot the live face measurement (tones + proportions) at capture time.
-  if (window.__face) {
-    state.tones = window.__face.tones || null;
-    state.proportions = window.__face.proportions || null;
-  }
-  // Robust fallback: even if MediaPipe hasn't produced a measurement (slow load,
-  // no detection yet), sample skin & hair tones straight from the captured photo,
-  // so the avatar is ALWAYS styled by the scan. Face is centred in the 3:4 crop.
-  if (!state.tones || !state.tones.skin || !state.tones.hair) {
-    try {
-      const px = (nx, ny) => { const d = ctx.getImageData(Math.round(nx*c.width), Math.round(ny*c.height), 1, 1).data;
-        return "#" + [d[0],d[1],d[2]].map(x=>x.toString(16).padStart(2,"0")).join(""); };
-      const t = state.tones || {};
-      if (!t.skin) t.skin = px(0.50, 0.52);   // cheek/centre → skin
-      if (!t.hair) t.hair = px(0.50, 0.12);   // top of head → hair
-      state.tones = t;
-    } catch(_) {}
-  }
-  showSnap(state.photo);
-  stopCamera();
+// ---- preview --------------------------------------------------------------
+function paint(){
+  const skinTint = SKINS[sel.skin].t, hair = HAIRS[sel.hair], onesie = ONESIES[sel.onesie].t;
+  const suit = mul(CREAM, onesie), face = mul(PEACH, skinTint), hairC = hair.d;
+  ["hood","body","earL","earR","footL","footR"].forEach(id=>$(id).setAttribute("fill", suit));
+  $("face").setAttribute("fill", face);
+  $("hair").setAttribute("fill", hairC);
+  // eyes pick up the hair colour (they share a material in the model)
+  $("eyeL").setAttribute("fill", hair.n==="Natural" ? "#3a2a20" : hairC);
+  $("eyeR").setAttribute("fill", hair.n==="Natural" ? "#3a2a20" : hairC);
+  $("skinName").textContent = SKINS[sel.skin].n;
+  $("hairName").textContent = hair.n;
+  $("onesieName").textContent = ONESIES[sel.onesie].n;
+  $("pvName").textContent = sel.name || "Player";
 }
 
-function showSnap(dataUrl){
-  const img = $("snap");
-  img.src = dataUrl;
-  img.classList.remove("hide");
-  $("ph").classList.add("hide");        // hide the "camera preview" placeholder (upload path)
-  $("video").classList.add("hide");
-  $("liveChip").classList.add("hide");
-  $("lockBadge").classList.remove("hide");
-  $("ring").classList.remove("hide");
-  $("scanActions").classList.add("hide");
-  $("retakeActions").classList.remove("hide");
-  $("toStep2").disabled = false;
-  $("camHint").textContent = "Looking good. Continue to customize, or retake.";
-}
-
-function resetCapture(){
-  state.photo = null;
-  $("snap").classList.add("hide");
-  $("lockBadge").classList.add("hide");
-  $("ring").classList.add("hide");
-  $("ph").classList.remove("hide");
-  $("retakeActions").classList.add("hide");
-  $("scanActions").classList.remove("hide");
-  $("startCam").classList.remove("hide");
-  $("capture").disabled = true;
-  $("toStep2").disabled = true;
-  $("camHint").textContent = "Your photo never leaves your device until you enter the world.";
-}
-
-function revealUpload(){
-  $("useUpload").textContent = "📁 Choose a photo";
-  $("useUpload").onclick = () => $("fileInput").click();
-}
-$("fileInput").addEventListener("change", (e) => {
-  const f = e.target.files && e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    state.photo = r.result;
-    showSnap(r.result);
-    // sample skin/hair tones from the uploaded photo so the avatar is styled too
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const cc = document.createElement("canvas"); cc.width = img.width; cc.height = img.height;
-        const cx = cc.getContext("2d"); cx.drawImage(img, 0, 0);
-        const px = (nx, ny) => { const d = cx.getImageData(Math.round(nx*cc.width), Math.round(ny*cc.height), 1, 1).data;
-          return "#" + [d[0],d[1],d[2]].map(x=>x.toString(16).padStart(2,"0")).join(""); };
-        state.tones = { skin: px(0.50, 0.55), hair: px(0.50, 0.12) };
-      } catch(_) {}
-    };
-    img.src = r.result;
-  };
-  r.readAsDataURL(f);
-});
-
-// ---- customization UI -----------------------------------------------------
-function buildCats(){
-  const catBox = $("cats");
-  catBox.innerHTML = "";
-  Object.keys(CATS).forEach(cat=>{
+function buildRow(box, list, key, colorOf){
+  box.innerHTML = "";
+  list.forEach((it,i)=>{
     const el = document.createElement("div");
-    el.className = "cat" + (cat===activeCat ? " active":"");
-    el.textContent = cat;
-    el.onclick = () => { activeCat = cat; buildCats(); buildTray(); };
-    catBox.appendChild(el);
-  });
-}
-function buildTray(){
-  const tray = $("tray");
-  tray.innerHTML = "";
-  CATS[activeCat].forEach((emoji,i)=>{
-    const el = document.createElement("div");
-    el.className = "item" + (state.cosmetics[activeCat]===i ? " sel":"");
-    el.textContent = emoji;
-    el.onclick = () => { state.cosmetics[activeCat] = i; buildTray(); };
-    tray.appendChild(el);
-  });
-}
-function buildSwatches(){
-  const sw = $("swatches");
-  sw.innerHTML = "";
-  COLORS.forEach((c,i)=>{
-    const el = document.createElement("div");
-    el.className = "sw" + (state.color===i ? " sel":"");
-    el.style.background = c;
-    el.onclick = () => { state.color = i; buildSwatches(); };
-    sw.appendChild(el);
+    el.className = "sw" + (sel[key]===i ? " sel":"");
+    el.style.background = colorOf(it);
+    el.title = it.n;
+    el.onclick = () => { sel[key]=i; buildRow(box,list,key,colorOf); paint(); };
+    box.appendChild(el);
   });
 }
 
-// ---- step navigation ------------------------------------------------------
-function setStep(n){
-  state.step = n;
-  document.querySelectorAll(".step").forEach(s=>{
-    const sn = +s.dataset.step;
-    s.classList.toggle("active", sn===n);
-    s.classList.toggle("done", sn<n);
-  });
-  ["panel1","panel2","panel3","panelDone"].forEach((p,i)=>{
-    $(p).classList.toggle("hide", i !== (n===0?3:n-1));
-  });
-  if(n===3) renderSummary();
-}
-
-function renderSummary(){
-  const cosmeticList = Object.entries(state.cosmetics)
-    .map(([k,v])=>`${k}: ${CATS[k][v]}`).join("   ");
-  $("summary").innerHTML = `
-    <div style="display:flex;gap:14px;align-items:center;margin:6px 0 4px">
-      <div style="width:74px;height:98px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0b0e13;flex:none">
-        ${state.photo ? `<img src="${state.photo}" style="width:100%;height:100%;object-fit:cover">` : ""}
-      </div>
-      <div>
-        <div style="font-size:20px;font-weight:800">${escapeHtml(state.name || "Player")}</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:2px">Signature Chibi · from your scan</div>
-        <div style="color:var(--cyan);font-size:12.5px;margin-top:6px">${cosmeticList || "default outfit"}</div>
-      </div>
-    </div>`;
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-
-// ---- MetaPerson live 3D scan (embedded iframe) ----------------------------
-function initMetaPerson(){
-  if(!META_ENABLED) return;               // no credentials yet -> keep selfie fallback
-  const stage = $("stage");
-  // swap the webcam stage for the MetaPerson creator iframe
-  stage.innerHTML = "";
-  const frame = document.createElement("iframe");
-  frame.id = "mpFrame";
-  frame.allow = "camera *; microphone *; clipboard-write; fullscreen";
-  frame.style.cssText = "width:100%;height:100%;border:0;display:block";
-  frame.src = META.iframe;
-  stage.appendChild(frame);
-  // hide the selfie buttons; the iframe has its own camera + export controls
-  $("scanActions").classList.add("hide");
-  $("retakeActions").classList.add("hide");
-  if($("camHint")) $("camHint").innerHTML = "Take a selfie in the panel above, then press <b>Export</b> to build your 3D avatar.";
-
-  window.addEventListener("message", (e)=>{
-    if(!/avatarsdk\.com$/.test((()=>{ try{ return new URL(e.origin).hostname; }catch(_){ return ""; }})())) return;
-    let msg = e.data;
-    if(typeof msg === "string"){ try{ msg = JSON.parse(msg); }catch(_){ return; } }
-    if(!msg || !msg.eventName) return;
-    const win = frame.contentWindow;
-    switch(msg.eventName){
-      case "metaperson_creator_loaded":
-      case "unity_loaded":
-        win.postMessage({ eventName:"authenticate", clientId:META.clientId, clientSecret:META.clientSecret }, "*");
-        win.postMessage(META.exportParams, "*");
-        break;
-      case "model_exported":
-        if(msg.url){
-          state.avatarUrl = msg.url;
-          if($("toStep2")) $("toStep2").disabled = false;
-          if($("camHint")) $("camHint").innerHTML = "✅ 3D avatar ready. Continue to customize.";
-        }
-        break;
-    }
-  });
-}
-
-// ---- persist + handoff to the game ---------------------------------------
-// Translate the picker UI (category -> emoji index) into the shape the GAME reads:
-// { outfit:<hex tint>, hat:<id>, effect:<id> }. Hair/skin/face stay scan-derived.
-const HAT_IDS = ["cap","crown","bow","cap","cap","halo"];   // maps CATS.Hats order
-const EFF_IDS = ["sparkle","glow","glow","glow","glow","sparkle"];  // maps CATS.Effects order
-function gameCosmetics(){
-  const c = { outfit: COLORS[state.color] || "" };   // chosen colour = outfit tint
-  const h = state.cosmetics["Hats"];
-  if (h != null && HAT_IDS[h]) c.hat = HAT_IDS[h];
-  const e = state.cosmetics["Effects"];
-  if (e != null && EFF_IDS[e]) c.effect = EFF_IDS[e];
-  return c;
-}
-function buildPayload(){
-  return {
-    v: 1,
-    name: state.name || "Player",
-    style: "signature_chibi",
-    facePhoto: state.photo,          // selfie fallback (used if no live 3D scan)
-    avatarUrl: state.avatarUrl,      // live-scanned rigged 3D GLB (MetaPerson) -> the game loads this
-    tones: state.tones || { skin:"", hair:"" },          // A3: measured skin/hair, drives in-world tint
-    proportions: state.proportions || {},                // A3: measured face shape, drives bone-scaling
-    cosmetics: gameCosmetics(),      // B1: {outfit,hat,effect} the game applies to the VRM
-    cosmeticsUI: state.cosmetics,    // raw picker selection (for edit-again / display)
-    accentColor: COLORS[state.color],
+// ---- persist + launch -----------------------------------------------------
+function save(){
+  const payload = {
+    v: 2,
+    name: sel.name || "Player",
+    tones: { skin: SKINS[sel.skin].t, hair: HAIRS[sel.hair].t },
+    cosmetics: { outfit: ONESIES[sel.onesie].t },
     createdAt: new Date().toISOString(),
   };
+  try{ localStorage.setItem("sh_avatar", JSON.stringify(payload)); }catch(e){}
 }
 function enterWorld(){
-  const payload = buildPayload();
-  try{ localStorage.setItem("sh_avatar", JSON.stringify(payload)); }catch(e){}
-  // show a device-safe summary (omit the big photo string)
-  const shown = Object.assign({}, payload, { facePhoto: payload.facePhoto ? "[selfie stored]" : null });
-  $("payloadOut").textContent = JSON.stringify(shown, null, 2);
-  setStep(0); // done panel
-  document.querySelectorAll(".step").forEach(s=>s.classList.add("done"));
-}
-function launchGame(){
-  // The Godot web build (bundled at ./world/) reads localStorage "sh_avatar".
-  // ?next= overrides the target; ?preview=1 keeps the standalone confirmation.
+  sel.name = $("nameInput").value.trim();
+  save();
   const q = new URLSearchParams(location.search);
   const url = q.get("next");
-  if(url){ location.href = url; return; }
-  if(q.get("preview") === "1"){
-    alert("Preview of the sign-up flow ✔\nYour avatar is saved on this device. In the full build this button drops you into the 3D world.");
-    return;
-  }
-  location.href = "world/";
+  location.href = url || "world/";
 }
 
 // ---- wire up --------------------------------------------------------------
-$("startCam").onclick = startCamera;
-$("capture").onclick = capturePhoto;
-$("retake").onclick = () => { resetCapture(); startCamera(); };
-$("useUpload").onclick = () => $("fileInput").click();
-$("toStep2").onclick = () => { buildCats(); buildTray(); buildSwatches(); setStep(2); };
-$("backTo1").onclick = () => setStep(1);
-$("toStep3").onclick = () => { state.name = $("nameInput").value.trim(); setStep(3); };
-$("backTo2").onclick = () => setStep(2);
+buildRow($("skinSw"),   SKINS,   "skin",   it=>mul(PEACH, it.t));
+buildRow($("hairSw"),   HAIRS,   "hair",   it=>it.d);
+buildRow($("onesieSw"), ONESIES, "onesie", it=>mul(CREAM, it.t));
+$("nameInput").addEventListener("input", e=>{ sel.name=e.target.value.trim(); paint(); });
 $("enterWorld").onclick = enterWorld;
-$("editAgain").onclick = () => setStep(2);
-$("launchGame").onclick = launchGame;
-$("nameInput") && $("nameInput").addEventListener("input", e=>state.name=e.target.value.trim());
-
-initMetaPerson();   // switches on the live 3D scan iframe once credentials are set
-setStep(1);
+paint();
 </script>
-
-<!-- A3: live face measurement (MediaPipe). Runs while the camera preview is on and
-     writes window.__face = {tones,proportions}; capturePhoto() snapshots it. -->
-<script type="module">
-import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-const METRICS = [
-  { key:"faceRound",  a:"round", lo:0.60, hi:1.10 },
-  { key:"eyeSize",    a:"eyes",  lo:0.10, hi:0.30 },
-  { key:"eyeSpacing", a:"gap",   lo:0.20, hi:0.50 },
-  { key:"mouthWidth", a:"mouth", lo:0.25, hi:0.65 },
-  { key:"jawWidth",   a:"jaw",   lo:0.45, hi:1.00 },
-];
-const lerp=(a,b,t)=>a+(b-a)*t, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-const rgbToHex=(r,g,b)=>"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
-const Sm={round:0,eyes:0,gap:0,mouth:0,jaw:0}; let primed=false;
-const sc=document.createElement("canvas"), sctx=sc.getContext("2d",{willReadFrequently:true});
-function sample(v,nx,ny){ try{ const w=v.videoWidth,h=v.videoHeight; if(!w)return null;
-  if(sc.width!==w){sc.width=w;sc.height=h;} sctx.drawImage(v,0,0,w,h);
-  const x=Math.max(0,Math.min(w-1,nx*w|0)), y=Math.max(0,Math.min(h-1,ny*h|0));
-  const d=sctx.getImageData(x,y,1,1).data; return [d[0],d[1],d[2]]; }catch(_){ return null; } }
-let fl=null;
-(async()=>{
-  try{
-    const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-    fl=await FaceLandmarker.createFromOptions(fs,{ baseOptions:{ modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" }, runningMode:"VIDEO", numFaces:1 });
-    loop();
-  }catch(e){ /* no measurement → Godot uses neutral defaults */ }
-})();
-function loop(){
-  requestAnimationFrame(loop);
-  const v=document.getElementById("video");
-  if(!fl||!v||!v.srcObject||v.readyState<2||v.paused) return;
-  let res; try{ res=fl.detectForVideo(v,performance.now()); }catch(_){ return; }
-  if(!res||!res.faceLandmarks||!res.faceLandmarks.length) return;
-  const lm=res.faceLandmarks[0];
-  const faceW=dist(lm[234],lm[454]), faceH=dist(lm[10],lm[152]);
-  if(faceW<1e-4||faceH<1e-4) return;
-  const eyeW=(dist(lm[33],lm[133])+dist(lm[362],lm[263]))/2;
-  const raw={ round:faceW/faceH, eyes:eyeW/faceW, gap:dist(lm[133],lm[362])/faceW,
-              mouth:dist(lm[61],lm[291])/faceW, jaw:dist(lm[172],lm[397])/faceW };
-  const prop={};
-  for(const m of METRICS){ Sm[m.a]=lerp(Sm[m.a], raw[m.a], primed?0.25:1);
-    prop[m.key]=+Math.max(0,Math.min(1,(Sm[m.a]-m.lo)/(m.hi-m.lo))).toFixed(3); }
-  primed=true;
-  const tones={};
-  const sk=sample(v,lm[50].x,lm[50].y); if(sk) tones.skin=rgbToHex(sk[0],sk[1],sk[2]);
-  const hr=sample(v,lm[10].x,Math.max(0,lm[10].y-faceH*0.55)); if(hr) tones.hair=rgbToHex(hr[0],hr[1],hr[2]);
-  window.__face={ tones, proportions:prop };
-}
-</script>
-<div style="position:fixed;right:6px;bottom:6px;z-index:99;font:11px monospace;color:#37e1ff;opacity:.6">build 260816-2014</div>
 </body>
 </html>
